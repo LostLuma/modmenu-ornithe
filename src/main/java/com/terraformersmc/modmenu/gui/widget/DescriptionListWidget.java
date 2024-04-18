@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tessellator;
+import com.terraformersmc.modmenu.api.UpdateInfo;
 import com.terraformersmc.modmenu.config.ModMenuConfig;
 import com.terraformersmc.modmenu.gui.ModsScreen;
 import com.terraformersmc.modmenu.gui.widget.entries.ModListEntry;
@@ -13,6 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.ConfirmChatLinkScreen;
 import net.minecraft.client.gui.screen.ConfirmationListener;
 import net.minecraft.client.gui.screen.CreditsScreen;
+import com.terraformersmc.modmenu.util.mod.ModrinthUpdateInfo;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.EntryListWidget;
 import net.minecraft.client.render.*;
@@ -33,6 +35,7 @@ public class DescriptionListWidget extends EntryListWidget<DescriptionListWidget
 	private static final Text HAS_UPDATE_TEXT = new TranslatableText("modmenu.hasUpdate");
 	private static final Text EXPERIMENTAL_TEXT = new TranslatableText("modmenu.experimental").setFormatting(Formatting.GOLD);
 	private static final Text MODRINTH_TEXT = new TranslatableText("modmenu.modrinth");
+	private static final Text DOWNLOAD_TEXT = new TranslatableText("modmenu.downloadLink").setFormatting(Formatting.BLUE, Formatting.UNDERLINE);
 	private static final Text CHILD_HAS_UPDATE_TEXT = new TranslatableText("modmenu.childHasUpdate");
 	private static final Text LINKS_TEXT = new TranslatableText("modmenu.links");
 	private static final Text SOURCE_TEXT = new TranslatableText("modmenu.source").setFormatting(Formatting.BLUE).setFormatting(Formatting.UNDERLINE);
@@ -81,7 +84,8 @@ public class DescriptionListWidget extends EntryListWidget<DescriptionListWidget
 				}
 
 				if (ModMenuConfig.UPDATE_CHECKER.getValue() && !ModMenuConfig.DISABLE_UPDATE_CHECKER.getValue().contains(mod.getId())) {
-					if (mod.getModrinthData() != null) {
+					UpdateInfo updateInfo = mod.getUpdateInfo();
+					if (updateInfo != null && updateInfo.isUpdateAvailable()) {
 						children().add(emptyEntry);
 
 						int index = 0;
@@ -97,14 +101,31 @@ public class DescriptionListWidget extends EntryListWidget<DescriptionListWidget
 							children().add(new DescriptionEntry(line, 8));
 						}
 
-						Text updateText = new TranslatableText("modmenu.updateText", VersionUtil.stripPrefix(mod.getModrinthData().versionNumber()), MODRINTH_TEXT)
-							.setFormatting(Formatting.BLUE)
-							.setFormatting(Formatting.UNDERLINE);
+						if (updateInfo instanceof ModrinthUpdateInfo) {
+							ModrinthUpdateInfo modrinthUpdateInfo = (ModrinthUpdateInfo) updateInfo;
+							Text updateText = new TranslatableText("modmenu.updateText", VersionUtil.stripPrefix(modrinthUpdateInfo.getVersionNumber()), MODRINTH_TEXT)
+								.setFormatting(Formatting.BLUE, Formatting.UNDERLINE);
 
-						String versionLink = String.format("https://modrinth.com/project/%s/version/%s", mod.getModrinthData().projectId(), mod.getModrinthData().versionId());
-
-						for (String line : textRenderer.split(updateText.getFormattedString(), wrapWidth - 16)) {
-							children().add(new LinkEntry(line, versionLink, 8));
+							for (String line : textRenderer.split(updateText.getFormattedString(), wrapWidth - 16)) {
+								children().add(new LinkEntry(line, modrinthUpdateInfo.getDownloadLink(), 8));
+							}
+						} else {
+							Text updateMessage = updateInfo.getUpdateMessage();
+							String downloadLink = updateInfo.getDownloadLink();
+							if (updateMessage == null) {
+								updateMessage = DOWNLOAD_TEXT;
+							} else {
+								if (downloadLink != null) {
+									updateMessage = updateMessage.copy().setFormatting(Formatting.BLUE, Formatting.UNDERLINE);
+								}
+							}
+							for (String line : textRenderer.split(updateMessage.getFormattedString(), wrapWidth - 16)) {
+								if (downloadLink != null) {
+									children().add(new LinkEntry(line, downloadLink, 8));
+								} else {
+									children().add(new DescriptionEntry(line, 8));
+								}
+							}
 						}
 					}
 					if (mod.getChildHasUpdate()) {
