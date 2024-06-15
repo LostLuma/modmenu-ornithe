@@ -38,7 +38,6 @@ public class DescriptionListWidget extends EntryListWidget<DescriptionListWidget
 
 	private static final Text HAS_UPDATE_TEXT = new TranslatableText("modmenu.hasUpdate");
 	private static final Text EXPERIMENTAL_TEXT = new TranslatableText("modmenu.experimental").setFormatting(Formatting.GOLD);
-	private static final Text MODRINTH_TEXT = new TranslatableText("modmenu.modrinth");
 	private static final Text DOWNLOAD_TEXT = new TranslatableText("modmenu.downloadLink").setFormatting(Formatting.BLUE, Formatting.UNDERLINE);
 	private static final Text CHILD_HAS_UPDATE_TEXT = new TranslatableText("modmenu.childHasUpdate");
 	private static final Text LINKS_TEXT = new TranslatableText("modmenu.links");
@@ -105,30 +104,20 @@ public class DescriptionListWidget extends EntryListWidget<DescriptionListWidget
 							children().add(new DescriptionEntry(line, 8));
 						}
 
-						if (updateInfo instanceof ModrinthUpdateInfo) {
-							ModrinthUpdateInfo modrinthUpdateInfo = (ModrinthUpdateInfo) updateInfo;
-							Text updateText = new TranslatableText("modmenu.updateText", VersionUtil.stripPrefix(modrinthUpdateInfo.getVersionNumber()), MODRINTH_TEXT)
-								.setFormatting(Formatting.BLUE, Formatting.UNDERLINE);
-
-							for (String line : textRenderer.split(updateText.getFormattedString(), wrapWidth - 16)) {
-								children().add(new LinkEntry(line, modrinthUpdateInfo.getDownloadLink(), 8));
-							}
+						Text updateMessage = updateInfo.getUpdateMessage();
+						String downloadLink = updateInfo.getDownloadLink();
+						if (updateMessage == null) {
+							updateMessage = DOWNLOAD_TEXT;
 						} else {
-							Text updateMessage = updateInfo.getUpdateMessage();
-							String downloadLink = updateInfo.getDownloadLink();
-							if (updateMessage == null) {
-								updateMessage = DOWNLOAD_TEXT;
-							} else {
-								if (downloadLink != null) {
-									updateMessage = updateMessage.copy().setFormatting(Formatting.BLUE, Formatting.UNDERLINE);
-								}
+							if (downloadLink != null) {
+								updateMessage = updateMessage.copy().setFormatting(Formatting.BLUE, Formatting.UNDERLINE);
 							}
-							for (String line : textRenderer.split(updateMessage.getFormattedString(), wrapWidth - 16)) {
-								if (downloadLink != null) {
-									children().add(new LinkEntry(line, downloadLink, 8));
-								} else {
-									children().add(new DescriptionEntry(line, 8));
-								}
+						}
+						for (String line : textRenderer.split(updateMessage.getFormattedString(), wrapWidth - 16)) {
+							if (downloadLink != null) {
+								children().add(new LinkEntry(line, downloadLink, 8));
+							} else {
+								children().add(new DescriptionEntry(line, 8));
 							}
 						}
 					}
