@@ -36,7 +36,6 @@ public class DescriptionListWidget extends EntryListWidget {
 
 	private static final Text HAS_UPDATE_TEXT = Text.translatable("modmenu.hasUpdate");
 	private static final Text EXPERIMENTAL_TEXT = Text.translatable("modmenu.experimental").setColor(Formatting.GOLD);
-	private static final Text MODRINTH_TEXT = Text.translatable("modmenu.modrinth");
 	private static final Text DOWNLOAD_TEXT = Text.translatable("modmenu.downloadLink").setColor(Formatting.BLUE).setUnderlined(true);
 	private static final Text CHILD_HAS_UPDATE_TEXT = Text.translatable("modmenu.childHasUpdate");
 	private static final Text LINKS_TEXT = Text.translatable("modmenu.links");
@@ -126,30 +125,20 @@ public class DescriptionListWidget extends EntryListWidget {
 							this.entries.add(new DescriptionEntry((String) line, 8));
 						}
 
-						if (updateInfo instanceof ModrinthUpdateInfo) {
-							ModrinthUpdateInfo modrinthUpdateInfo = (ModrinthUpdateInfo) updateInfo;
-							Text updateText = Text.translatable("modmenu.updateText", VersionUtil.stripPrefix(modrinthUpdateInfo.getVersionNumber()), MODRINTH_TEXT)
-								.setColor(Formatting.BLUE).setUnderlined(true);
-
-							for (Object line : textRenderer.split(updateText.buildString(true), wrapWidth - 16)) {
-								this.entries.add(new LinkEntry((String) line, modrinthUpdateInfo.getDownloadLink(), 8));
-							}
+						Text updateMessage = updateInfo.getUpdateMessage();
+						String downloadLink = updateInfo.getDownloadLink();
+						if (updateMessage == null) {
+							updateMessage = DOWNLOAD_TEXT;
 						} else {
-							Text updateMessage = updateInfo.getUpdateMessage();
-							String downloadLink = updateInfo.getDownloadLink();
-							if (updateMessage == null) {
-								updateMessage = DOWNLOAD_TEXT;
-							} else {
-								if (downloadLink != null) {
-									updateMessage = updateMessage.setColor(Formatting.BLUE).setUnderlined(true);
-								}
+							if (downloadLink != null) {
+								updateMessage = updateMessage.setColor(Formatting.BLUE).setUnderlined(true);
 							}
-							for (Object line : textRenderer.split(updateMessage.buildString(true), wrapWidth - 16)) {
-								if (downloadLink != null) {
-									this.entries.add(new LinkEntry((String) line, downloadLink, 8));
-								} else {
-									this.entries.add(new DescriptionEntry((String) line, 8));
-								}
+						}
+						for (Object line : textRenderer.split(updateMessage.buildString(true), wrapWidth - 16)) {
+							if (downloadLink != null) {
+								this.entries.add(new LinkEntry((String) line, downloadLink, 8));
+							} else {
+								this.entries.add(new DescriptionEntry((String) line, 8));
 							}
 						}
 					}
